@@ -1,0 +1,27 @@
+package backend.ai.dto;
+
+import java.util.List;
+
+public class QuizGeneratorResponse {
+
+    private List<Question> questions;
+
+    public QuizGeneratorResponse() {
+    }
+
+    public QuizGeneratorResponse(
+            List<Question> questions
+    ) {
+        this.questions = questions;
+    }
+
+    public List<Question> getQuestions() {
+        return questions;
+    }
+
+    public void setQuestions(
+            List<Question> questions
+    ) {
+        this.questions = questions;
+    }
+}
