@@ -1,7 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:8080/api/ai";
-
+const API_URL = "https://submys.onrender.com/api/ai";
 const reviewAssignment = (data) => {
     return axios.post(
         `${API_URL}/assignment-review`,

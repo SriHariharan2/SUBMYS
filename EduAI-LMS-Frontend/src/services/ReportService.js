@@ -1,7 +1,7 @@
 import axios from "axios";
 import { getToken } from "../utils/localStorage";
 
-const API_URL = "http://localhost:8080/api/reports";
+const API_URL = "https://submys.onrender.com/api/reports";
 
 class ReportService {
 
