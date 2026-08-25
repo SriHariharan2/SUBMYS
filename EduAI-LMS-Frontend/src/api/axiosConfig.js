@@ -12,15 +12,12 @@ const api = axios.create({
 
 api.interceptors.request.use(
     (config) => {
-
         const token = getToken();
 
-        console.log("======================================");
         console.log("API REQUEST");
-        console.log("URL:", config.baseURL + config.url);
+        console.log("URL:", `${config.baseURL}${config.url}`);
         console.log("Method:", config.method);
-        console.log("JWT Token:", token);
-        console.log("======================================");
+        console.log("JWT present:", !!token);
 
         // =================================================
         // JWT
@@ -35,42 +32,28 @@ api.interceptors.request.use(
         // =================================================
 
         if (config.data instanceof FormData) {
-
-            // Let browser/Axios create multipart boundary
+            // Let the browser/Axios set the multipart boundary
             delete config.headers["Content-Type"];
 
-            console.log(
-                "Axios: Sending multipart/form-data"
-            );
-
+            console.log("Axios: Sending multipart/form-data");
         } else {
-
-            config.headers["Content-Type"] =
-                "application/json";
+            config.headers["Content-Type"] = "application/json";
         }
 
         return config;
     },
-
     (error) => {
-        console.error(
-            "Axios request error:",
-            error
-        );
-
+        console.error("Axios request error:", error);
         return Promise.reject(error);
     }
 );
-
 
 // =====================================================
 // RESPONSE INTERCEPTOR
 // =====================================================
 
 api.interceptors.response.use(
-
     (response) => {
-
         console.log(
             "API RESPONSE:",
             response.status,
@@ -79,9 +62,7 @@ api.interceptors.response.use(
 
         return response;
     },
-
     (error) => {
-
         console.error(
             "API RESPONSE ERROR:",
             error.response?.status,
@@ -91,6 +72,5 @@ api.interceptors.response.use(
         return Promise.reject(error);
     }
 );
-
 
 export default api;
