@@ -9,7 +9,6 @@ import org.springframework.context.annotation.Configuration;
 
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 
@@ -37,7 +36,6 @@ public class SecurityConfig {
     public SecurityConfig(
             JwtAuthFilter jwtAuthFilter
     ) {
-
         this.jwtAuthFilter = jwtAuthFilter;
     }
 
@@ -159,8 +157,13 @@ public class SecurityConfig {
                                 // =================================
                                 // PUBLIC
                                 // =================================
+                                // These endpoints can be accessed
+                                // without a JWT token.
+                                // =================================
 
                                 .requestMatchers(
+                                        "/",
+                                        "/error",
                                         "/api/auth/**"
                                 )
                                 .permitAll()
@@ -168,16 +171,6 @@ public class SecurityConfig {
 
                                 // =================================
                                 // COURSE PROGRESS
-                                // =================================
-                                //
-                                // Student:
-                                // GET /student/{studentId}
-                                //
-                                // Admin/Teacher:
-                                // all other operations
-                                //
-                                // We keep the endpoint authenticated
-                                // because JWT authentication is required.
                                 // =================================
 
                                 .requestMatchers(
