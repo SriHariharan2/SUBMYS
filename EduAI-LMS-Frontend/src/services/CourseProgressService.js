@@ -8,8 +8,6 @@ const API_URL =
 // =====================================================
 // GET ALL PROGRESS
 // =====================================================
-// ADMIN / TEACHER
-// =====================================================
 
 const getAllProgress = () => {
 
@@ -25,12 +23,8 @@ const getAllProgress = () => {
 // =====================================================
 // GET PROGRESS BY STUDENT
 // =====================================================
-// STUDENT
-// =====================================================
 
-const getProgressByStudent = (
-    studentId
-) => {
+const getProgressByStudent = (studentId) => {
 
     return axios.get(
         `${API_URL}/student/${studentId}`,
@@ -45,9 +39,7 @@ const getProgressByStudent = (
 // GET PROGRESS BY COURSE
 // =====================================================
 
-const getProgressByCourse = (
-    courseId
-) => {
+const getProgressByCourse = (courseId) => {
 
     return axios.get(
         `${API_URL}/course/${courseId}`,
@@ -78,8 +70,6 @@ const getProgress = (
 
 // =====================================================
 // CREATE PROGRESS
-// =====================================================
-// ADMIN / TEACHER
 // =====================================================
 
 const createProgress = (
@@ -121,9 +111,7 @@ const updateProgress = (
 // DELETE PROGRESS
 // =====================================================
 
-const deleteProgress = (
-    id
-) => {
+const deleteProgress = (id) => {
 
     return axios.delete(
         `${API_URL}/${id}`,
@@ -141,19 +129,12 @@ const deleteProgress = (
 const CourseProgressService = {
 
     getAllProgress,
-
     getProgressByStudent,
-
     getProgressByCourse,
-
     getProgress,
-
     createProgress,
-
     updateProgress,
-
     deleteProgress,
 };
-
 
 export default CourseProgressService;

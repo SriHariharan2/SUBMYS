@@ -1,112 +1,30 @@
-package backend.config;
-
-import backend.security.JwtAuthFilter;
+package backend.config.config;
 
 import java.util.List;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
-
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import backend.security.JwtAuthFilter;
 
 @Configuration
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
 
-
-    // =====================================================
-    // CONSTRUCTOR
-    // =====================================================
-
-    public SecurityConfig(
-            JwtAuthFilter jwtAuthFilter
-    ) {
+    public SecurityConfig(JwtAuthFilter jwtAuthFilter) {
         this.jwtAuthFilter = jwtAuthFilter;
     }
-
-
-    // =====================================================
-    // PASSWORD ENCODER
-    // =====================================================
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-
-        return new BCryptPasswordEncoder();
-    }
-
-
-    // =====================================================
-    // AUTHENTICATION MANAGER
-    // =====================================================
-
-    @Bean
-    public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration configuration
-    ) throws Exception {
-
-        return configuration.getAuthenticationManager();
-    }
-
-
-    // =====================================================
-    // CORS
-    // =====================================================
-
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-
-        CorsConfiguration configuration =
-                new CorsConfiguration();
-
-        configuration.setAllowedOrigins(
-                List.of(
-                        "http://localhost:5173"
-                )
-        );
-
-        configuration.setAllowedMethods(
-                List.of(
-                        "GET",
-                        "POST",
-                        "PUT",
-                        "DELETE",
-                        "OPTIONS"
-                )
-        );
-
-        configuration.setAllowedHeaders(
-                List.of("*")
-        );
-
-        configuration.setAllowCredentials(true);
-
-        UrlBasedCorsConfigurationSource source =
-                new UrlBasedCorsConfigurationSource();
-
-        source.registerCorsConfiguration(
-                "/**",
-                configuration
-        );
-
-        return source;
-    }
-
 
     // =====================================================
     // SECURITY FILTER CHAIN
@@ -114,295 +32,189 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(
-            HttpSecurity http
-    ) throws Exception {
+            HttpSecurity http) throws Exception {
 
         http
 
-                // =================================================
-                // CORS
-                // =================================================
+            // =================================================
+            // CORS
+            // =================================================
 
-                .cors(cors -> {})
+            .cors(cors ->
+                cors.configurationSource(corsConfigurationSource())
+            )
 
+            // =================================================
+            // CSRF
+            // =================================================
 
-                // =================================================
-                // CSRF
-                // =================================================
+            .csrf(csrf -> csrf.disable())
 
-                .csrf(
-                        csrf -> csrf.disable()
+            // =================================================
+            // SESSION
+            // =================================================
+
+            .sessionManagement(session ->
+                session.sessionCreationPolicy(
+                    SessionCreationPolicy.STATELESS
                 )
-
-
-                // =================================================
-                // STATELESS JWT
-                // =================================================
-
-                .sessionManagement(
-                        session ->
-                                session.sessionCreationPolicy(
-                                        SessionCreationPolicy.STATELESS
-                                )
-                )
-
-
-                // =================================================
-                // AUTHORIZATION
-                // =================================================
-
-                .authorizeHttpRequests(
-                        auth -> auth
-
-                                // =================================
-                                // PUBLIC
-                                // =================================
-                                // These endpoints can be accessed
-                                // without a JWT token.
-                                // =================================
-
-                                .requestMatchers(
-                                        "/",
-                                        "/error",
-                                        "/api/auth/**"
-                                )
-                                .permitAll()
-
-
-                                // =================================
-                                // COURSE PROGRESS
-                                // =================================
-
-                                .requestMatchers(
-                                        "/api/course-progress/student/**"
-                                )
-                                .authenticated()
-
-                                .requestMatchers(
-                                        "/api/course-progress/**"
-                                )
-                                .authenticated()
-
-
-                                // =================================
-                                // USERS
-                                // =================================
-
-                                .requestMatchers(
-                                        "/api/users/**"
-                                )
-                                .authenticated()
-
-
-                                // =================================
-                                // COURSES
-                                // =================================
-
-                                .requestMatchers(
-                                        "/api/courses/**"
-                                )
-                                .authenticated()
-
-
-                                // =================================
-                                // SUBJECTS
-                                // =================================
-
-                                .requestMatchers(
-                                        "/api/subjects/**"
-                                )
-                                .authenticated()
-
-
-                                // =================================
-                                // TOPICS
-                                // =================================
-
-                                .requestMatchers(
-                                        "/api/topics/**"
-                                )
-                                .authenticated()
-
-
-                                // =================================
-                                // RESOURCES
-                                // =================================
-
-                                .requestMatchers(
-                                        "/api/resources/**"
-                                )
-                                .authenticated()
-
-
-                                // =================================
-                                // ASSIGNMENTS
-                                // =================================
-
-                                .requestMatchers(
-                                        "/api/assignments/**"
-                                )
-                                .authenticated()
-
-
-                                // =================================
-                                // ASSIGNMENT SUBMISSIONS
-                                // =================================
-
-                                .requestMatchers(
-                                        "/api/assignment-submissions/**"
-                                )
-                                .authenticated()
-
-
-                                // =================================
-                                // QUIZZES
-                                // =================================
-
-                                .requestMatchers(
-                                        "/api/quizzes/**"
-                                )
-                                .authenticated()
-
-
-                                // =================================
-                                // QUESTIONS
-                                // =================================
-
-                                .requestMatchers(
-                                        "/api/questions/**"
-                                )
-                                .authenticated()
-
-
-                                // =================================
-                                // ENROLLMENTS
-                                // =================================
-
-                                .requestMatchers(
-                                        "/api/enrollments/**"
-                                )
-                                .authenticated()
-
-
-                                // =================================
-                                // ANNOUNCEMENTS
-                                // =================================
-
-                                .requestMatchers(
-                                        "/api/announcements/**"
-                                )
-                                .authenticated()
-
-
-                                // =================================
-                                // DISCUSSIONS
-                                // =================================
-
-                                .requestMatchers(
-                                        "/api/discussions/**"
-                                )
-                                .authenticated()
-
-
-                                // =================================
-                                // REPLIES
-                                // =================================
-
-                                .requestMatchers(
-                                        "/api/replies/**"
-                                )
-                                .authenticated()
-
-
-                                // =================================
-                                // CERTIFICATES
-                                // =================================
-
-                                .requestMatchers(
-                                        "/api/certificates/**"
-                                )
-                                .authenticated()
-
-
-                                // =================================
-                                // GRADES
-                                // =================================
-
-                                .requestMatchers(
-                                        "/api/grades/**"
-                                )
-                                .authenticated()
-
-
-                                // =================================
-                                // ATTENDANCE
-                                // =================================
-
-                                .requestMatchers(
-                                        "/api/attendance/**"
-                                )
-                                .authenticated()
-
-
-                                // =================================
-                                // EVENTS
-                                // =================================
-
-                                .requestMatchers(
-                                        "/api/events/**"
-                                )
-                                .authenticated()
-
-
-                                // =================================
-                                // REPORTS
-                                // =================================
-
-                                .requestMatchers(
-                                        "/api/reports/**"
-                                )
-                                .authenticated()
-
-
-                                // =================================
-                                // NOTIFICATIONS
-                                // =================================
-
-                                .requestMatchers(
-                                        "/api/notifications/**"
-                                )
-                                .authenticated()
-
-
-                                // =================================
-                                // AI
-                                // =================================
-
-                                .requestMatchers(
-                                        "/api/ai/**"
-                                )
-                                .authenticated()
-
-
-                                // =================================
-                                // EVERYTHING ELSE
-                                // =================================
-
-                                .anyRequest()
-                                .authenticated()
-                )
-
-
-                // =================================================
-                // JWT FILTER
-                // =================================================
-
-                .addFilterBefore(
-                        jwtAuthFilter,
-                        UsernamePasswordAuthenticationFilter.class
-                );
-
+            )
+
+            // =================================================
+            // AUTHORIZATION
+            // =================================================
+
+            .authorizeHttpRequests(auth -> auth
+
+                // -------------------------------------------------
+                // CORS PREFLIGHT
+                // -------------------------------------------------
+
+                .requestMatchers(
+                    HttpMethod.OPTIONS,
+                    "/**"
+                ).permitAll()
+
+                // -------------------------------------------------
+                // ROOT + ERROR
+                // -------------------------------------------------
+
+                .requestMatchers(
+                    "/",
+                    "/error"
+                ).permitAll()
+
+                // -------------------------------------------------
+                // AUTH APIs
+                // Login/register/OTP/etc.
+                // -------------------------------------------------
+
+                .requestMatchers(
+                    "/api/auth/**"
+                ).permitAll()
+
+                // -------------------------------------------------
+                // PUBLIC APIs
+                // -------------------------------------------------
+
+                .requestMatchers(
+                    "/api/public/**"
+                ).permitAll()
+
+                // -------------------------------------------------
+                // EVERYTHING ELSE
+                // -------------------------------------------------
+
+                .anyRequest().authenticated()
+            )
+
+            // =================================================
+            // JWT FILTER
+            // =================================================
+
+            .addFilterBefore(
+                jwtAuthFilter,
+                UsernamePasswordAuthenticationFilter.class
+            );
 
         return http.build();
+    }
+
+    // =====================================================
+    // CORS CONFIGURATION
+    // =====================================================
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+
+        CorsConfiguration configuration =
+            new CorsConfiguration();
+
+        // -------------------------------------------------
+        // FRONTEND
+        // -------------------------------------------------
+
+        configuration.setAllowedOrigins(
+            List.of(
+                "https://submys-lms-frontend.onrender.com"
+            )
+        );
+
+        // -------------------------------------------------
+        // METHODS
+        // -------------------------------------------------
+
+        configuration.setAllowedMethods(
+            List.of(
+                "GET",
+                "POST",
+                "PUT",
+                "DELETE",
+                "PATCH",
+                "OPTIONS"
+            )
+        );
+
+        // -------------------------------------------------
+        // HEADERS
+        // -------------------------------------------------
+
+        configuration.setAllowedHeaders(
+            List.of(
+                "Authorization",
+                "Content-Type",
+                "Accept",
+                "Origin",
+                "X-Requested-With"
+            )
+        );
+
+        // -------------------------------------------------
+        // EXPOSED HEADERS
+        // -------------------------------------------------
+
+        configuration.setExposedHeaders(
+            List.of(
+                "Authorization"
+            )
+        );
+
+        // -------------------------------------------------
+        // CREDENTIALS
+        // -------------------------------------------------
+
+        configuration.setAllowCredentials(true);
+
+        // -------------------------------------------------
+        // PREFLIGHT CACHE
+        // -------------------------------------------------
+
+        configuration.setMaxAge(3600L);
+
+        // -------------------------------------------------
+        // APPLY CORS TO EVERYTHING
+        // -------------------------------------------------
+
+        UrlBasedCorsConfigurationSource source =
+            new UrlBasedCorsConfigurationSource();
+
+        source.registerCorsConfiguration(
+            "/**",
+            configuration
+        );
+
+        return source;
+    }
+
+    // =====================================================
+    // AUTHENTICATION MANAGER
+    // =====================================================
+
+    @Bean
+    public AuthenticationManager authenticationManager(
+            AuthenticationConfiguration configuration)
+            throws Exception {
+
+        return configuration.getAuthenticationManager();
     }
 }

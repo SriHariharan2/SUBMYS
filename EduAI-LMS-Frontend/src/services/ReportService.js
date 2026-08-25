@@ -1,7 +1,8 @@
 import axios from "axios";
 import { getToken } from "../utils/localStorage";
 
-const API_URL = "https://submys.onrender.com/api/reports";
+const API_URL =
+    "https://submys.onrender.com/api/reports";
 
 class ReportService {
 
@@ -15,11 +16,11 @@ class ReportService {
             `${API_URL}/dashboard`,
             {
                 headers: {
-                    Authorization: `Bearer ${getToken()}`
+                    Authorization:
+                        `Bearer ${getToken()}`
                 }
             }
         );
-
     }
 
 
@@ -33,11 +34,11 @@ class ReportService {
             `${API_URL}/student/${studentId}`,
             {
                 headers: {
-                    Authorization: `Bearer ${getToken()}`
+                    Authorization:
+                        `Bearer ${getToken()}`
                 }
             }
         );
-
     }
 
 
@@ -51,13 +52,12 @@ class ReportService {
             `${API_URL}/teacher/${teacherId}`,
             {
                 headers: {
-                    Authorization: `Bearer ${getToken()}`
+                    Authorization:
+                        `Bearer ${getToken()}`
                 }
             }
         );
-
     }
-
 }
 
 export default new ReportService();

@@ -3,6 +3,7 @@ import { getToken } from "../utils/localStorage";
 
 const api = axios.create({
     baseURL: "https://submys.onrender.com/api",
+    timeout: 30000,
 });
 
 // =====================================================
@@ -14,7 +15,12 @@ api.interceptors.request.use(
 
         const token = getToken();
 
+        console.log("======================================");
+        console.log("API REQUEST");
+        console.log("URL:", config.baseURL + config.url);
+        console.log("Method:", config.method);
         console.log("JWT Token:", token);
+        console.log("======================================");
 
         // =================================================
         // JWT
@@ -25,34 +31,66 @@ api.interceptors.request.use(
         }
 
         // =================================================
-        // IMPORTANT:
-        // Do NOT force application/json for FormData.
-        // The browser/Axios must create the multipart boundary.
+        // FORM DATA
         // =================================================
 
         if (config.data instanceof FormData) {
 
-            // Remove any previously assigned JSON content type.
+            // Let browser/Axios create multipart boundary
             delete config.headers["Content-Type"];
 
             console.log(
-                "Axios: Sending multipart/form-data request"
+                "Axios: Sending multipart/form-data"
             );
 
         } else {
 
-            // Normal API requests use JSON.
             config.headers["Content-Type"] =
                 "application/json";
-
         }
 
         return config;
     },
 
     (error) => {
+        console.error(
+            "Axios request error:",
+            error
+        );
+
         return Promise.reject(error);
     }
 );
+
+
+// =====================================================
+// RESPONSE INTERCEPTOR
+// =====================================================
+
+api.interceptors.response.use(
+
+    (response) => {
+
+        console.log(
+            "API RESPONSE:",
+            response.status,
+            response.config.url
+        );
+
+        return response;
+    },
+
+    (error) => {
+
+        console.error(
+            "API RESPONSE ERROR:",
+            error.response?.status,
+            error.response?.data || error.message
+        );
+
+        return Promise.reject(error);
+    }
+);
+
 
 export default api;
