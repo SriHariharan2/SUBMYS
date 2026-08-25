@@ -7,14 +7,12 @@ import backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
-
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
 
 @Service
 public class OtpService {
@@ -25,30 +23,14 @@ public class OtpService {
     @Autowired
     private UserRepository userRepository;
 
-
-    // =====================================================
-    // OTP STORAGE
-    // =====================================================
-
     private final Map<String, OtpData> otpStorage =
             new ConcurrentHashMap<>();
 
-
-    // =====================================================
-    // OTP EXPIRATION
-    // =====================================================
-
     private static final int OTP_EXPIRATION_MINUTES = 5;
-
-
-    // =====================================================
-    // GENERATE OTP
-    // =====================================================
 
     private String generateOtp() {
 
-        SecureRandom random =
-                new SecureRandom();
+        SecureRandom random = new SecureRandom();
 
         int otpNumber =
                 100000 + random.nextInt(900000);
@@ -56,78 +38,40 @@ public class OtpService {
         return String.valueOf(otpNumber);
     }
 
-
-    // =====================================================
-    // SEND OTP
-    // =====================================================
-
     public void sendOtp(String email) {
 
         if (email == null || email.isBlank()) {
-
-            throw new RuntimeException(
-                    "Email is required"
-            );
+            throw new RuntimeException("Email is required");
         }
-
 
         String normalizedEmail =
                 email.trim().toLowerCase();
-
-
-        // -------------------------------------------------
-        // FIND USER
-        // -------------------------------------------------
 
         User user =
                 userRepository
                         .findByEmail(normalizedEmail)
                         .orElseThrow(
-                                () ->
-                                        new RuntimeException(
-                                                "User not found"
-                                        )
+                                () -> new RuntimeException(
+                                        "User not found"
+                                )
                         );
-
-
-        // -------------------------------------------------
-        // CHECK ROLE
-        // -------------------------------------------------
 
         if (
                 user.getRole() != Role.ADMIN &&
                 user.getRole() != Role.TEACHER
         ) {
-
             throw new RuntimeException(
                     "OTP verification is only required for administrators and teachers"
             );
         }
 
-
-        // -------------------------------------------------
-        // GENERATE OTP
-        // -------------------------------------------------
-
-        String otp =
-                generateOtp();
-
-
-        // -------------------------------------------------
-        // EXPIRATION
-        // -------------------------------------------------
+        String otp = generateOtp();
 
         LocalDateTime expiresAt =
                 LocalDateTime.now()
-                        .plusMinutes(
-                                OTP_EXPIRATION_MINUTES
-                        );
+                        .plusMinutes(OTP_EXPIRATION_MINUTES);
 
-
-        // -------------------------------------------------
-        // SAVE OTP
-        // -------------------------------------------------
-
+        // Save OTP immediately
         otpStorage.put(
                 normalizedEmail,
                 new OtpData(
@@ -136,58 +80,81 @@ public class OtpService {
                 )
         );
 
-
-        // -------------------------------------------------
-        // CREATE EMAIL
-        // -------------------------------------------------
-
-        SimpleMailMessage message =
-                new SimpleMailMessage();
-
-
-        message.setTo(
-                normalizedEmail
+        /*
+         * IMPORTANT:
+         * Send email in a separate thread so the login request
+         * does not have to wait for the SMTP server.
+         */
+        sendEmailAsync(
+                normalizedEmail,
+                user.getFullName(),
+                otp
         );
-
-
-        message.setSubject(
-                "SUBMYS Login Verification Code"
-        );
-
-
-        message.setText(
-                "Hello "
-                        + user.getFullName()
-                        + ",\n\n"
-
-                        + "Your SUBMYS login verification code is:\n\n"
-
-                        + otp
-                        + "\n\n"
-
-                        + "This OTP will expire in "
-                        + OTP_EXPIRATION_MINUTES
-                        + " minutes.\n\n"
-
-                        + "If you did not attempt to log in, "
-                        + "please ignore this email.\n\n"
-
-                        + "Regards,\n"
-                        + "SUBMYS"
-        );
-
-
-        // -------------------------------------------------
-        // SEND EMAIL
-        // -------------------------------------------------
-
-        mailSender.send(message);
     }
 
+    private void sendEmailAsync(
+            String email,
+            String fullName,
+            String otp
+    ) {
 
-    // =====================================================
-    // VERIFY OTP
-    // =====================================================
+        Thread emailThread = new Thread(() -> {
+
+            try {
+
+                SimpleMailMessage message =
+                        new SimpleMailMessage();
+
+                message.setTo(email);
+
+                message.setSubject(
+                        "SUBMYS Login Verification Code"
+                );
+
+                message.setText(
+                        "Hello "
+                                + fullName
+                                + ",\n\n"
+
+                                + "Your SUBMYS login verification code is:\n\n"
+
+                                + otp
+                                + "\n\n"
+
+                                + "This OTP will expire in "
+                                + OTP_EXPIRATION_MINUTES
+                                + " minutes.\n\n"
+
+                                + "If you did not attempt to log in, "
+                                + "please ignore this email.\n\n"
+
+                                + "Regards,\n"
+                                + "SUBMYS"
+                );
+
+                mailSender.send(message);
+
+                System.out.println(
+                        "OTP email sent successfully to: "
+                                + email
+                );
+
+            } catch (Exception e) {
+
+                System.err.println(
+                        "Failed to send OTP email to: "
+                                + email
+                );
+
+                e.printStackTrace();
+            }
+
+        });
+
+        emailThread.setName("otp-email-thread");
+
+        emailThread.start();
+    }
 
     public boolean verifyOtp(
             String email,
@@ -200,38 +167,23 @@ public class OtpService {
                 otp == null ||
                 otp.isBlank()
         ) {
-
             return false;
         }
-
 
         String normalizedEmail =
                 email.trim().toLowerCase();
 
-
         String normalizedOtp =
                 otp.trim();
-
-
-        // -------------------------------------------------
-        // GET STORED OTP
-        // -------------------------------------------------
 
         OtpData otpData =
                 otpStorage.get(
                         normalizedEmail
                 );
 
-
         if (otpData == null) {
-
             return false;
         }
-
-
-        // -------------------------------------------------
-        // CHECK EXPIRATION
-        // -------------------------------------------------
 
         if (
                 LocalDateTime.now()
@@ -247,38 +199,19 @@ public class OtpService {
             return false;
         }
 
-
-        // -------------------------------------------------
-        // CHECK OTP
-        // -------------------------------------------------
-
         if (
                 !otpData.getOtp()
                         .equals(normalizedOtp)
         ) {
-
             return false;
         }
-
-
-        // -------------------------------------------------
-        // OTP SUCCESS
-        // -------------------------------------------------
-        // Remove OTP so it cannot be reused.
-        // -------------------------------------------------
 
         otpStorage.remove(
                 normalizedEmail
         );
 
-
         return true;
     }
-
-
-    // =====================================================
-    // OTP DATA
-    // =====================================================
 
     private static class OtpData {
 
@@ -286,26 +219,20 @@ public class OtpService {
 
         private final LocalDateTime expiresAt;
 
-
         public OtpData(
                 String otp,
                 LocalDateTime expiresAt
         ) {
 
             this.otp = otp;
-
             this.expiresAt = expiresAt;
         }
 
-
         public String getOtp() {
-
             return otp;
         }
 
-
         public LocalDateTime getExpiresAt() {
-
             return expiresAt;
         }
     }
