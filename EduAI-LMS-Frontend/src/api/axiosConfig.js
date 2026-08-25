@@ -3,7 +3,7 @@ import { getToken } from "../utils/localStorage";
 
 const api = axios.create({
     baseURL: "https://submys.onrender.com/api",
-    timeout: 30000,
+    timeout: 90000,
 });
 
 // =====================================================
