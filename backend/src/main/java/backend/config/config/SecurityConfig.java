@@ -49,18 +49,14 @@ public class SecurityConfig {
             // =================================================
 
             .cors(cors ->
-                cors.configurationSource(
-                    corsConfigurationSource()
-                )
+                cors.configurationSource(corsConfigurationSource())
             )
 
             // =================================================
             // CSRF
             // =================================================
 
-            .csrf(csrf ->
-                csrf.disable()
-            )
+            .csrf(csrf -> csrf.disable())
 
             // =================================================
             // SESSION
@@ -97,7 +93,7 @@ public class SecurityConfig {
                 ).permitAll()
 
                 // -------------------------------------------------
-                // AUTHENTICATION
+                // AUTH
                 // -------------------------------------------------
 
                 .requestMatchers(
@@ -129,7 +125,7 @@ public class SecurityConfig {
             )
 
             // =================================================
-            // JWT AUTHENTICATION FILTER
+            // JWT FILTER
             // =================================================
 
             .addFilterBefore(
@@ -152,21 +148,17 @@ public class SecurityConfig {
             new CorsConfiguration();
 
         // -------------------------------------------------
-        // FRONTEND ORIGINS
+        // FRONTEND
         // -------------------------------------------------
 
         configuration.setAllowedOrigins(
             List.of(
-                // Local development
-                "http://localhost:5173",
-
-                // Render frontend
                 "https://submys-lms-frontend.onrender.com"
             )
         );
 
         // -------------------------------------------------
-        // HTTP METHODS
+        // METHODS
         // -------------------------------------------------
 
         configuration.setAllowedMethods(
@@ -181,7 +173,7 @@ public class SecurityConfig {
         );
 
         // -------------------------------------------------
-        // REQUEST HEADERS
+        // HEADERS
         // -------------------------------------------------
 
         configuration.setAllowedHeaders(
@@ -195,7 +187,7 @@ public class SecurityConfig {
         );
 
         // -------------------------------------------------
-        // RESPONSE HEADERS
+        // EXPOSED HEADERS
         // -------------------------------------------------
 
         configuration.setExposedHeaders(
@@ -217,7 +209,7 @@ public class SecurityConfig {
         configuration.setMaxAge(3600L);
 
         // -------------------------------------------------
-        // APPLY CORS TO ALL ENDPOINTS
+        // APPLY TO ALL
         // -------------------------------------------------
 
         UrlBasedCorsConfigurationSource source =
