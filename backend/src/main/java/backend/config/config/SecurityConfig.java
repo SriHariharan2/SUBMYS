@@ -153,7 +153,7 @@ public class SecurityConfig {
 
         configuration.setAllowedOrigins(
             List.of(
-                "https://submys-lms-frontend.onrender.com"
+                "https://submys.onrender.com"
             )
         );
 
