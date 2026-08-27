@@ -18,14 +18,24 @@ import java.util.concurrent.ConcurrentHashMap;
 public class OtpService {
 
     private final UserRepository userRepository;
-
     private final RestClient restClient;
 
-    @Value("${resend.api-key}")
-    private String resendApiKey;
+    // =====================================================
+    // SENDLIB CONFIGURATION
+    // =====================================================
 
-    @Value("${resend.from}")
-    private String resendFrom;
+    @Value("${sendlib.api-key}")
+    private String sendlibApiKey;
+
+    @Value("${sendlib.url}")
+    private String sendlibUrl;
+
+    @Value("${sendlib.from}")
+    private String sendlibFrom;
+
+    // =====================================================
+    // OTP CONFIGURATION
+    // =====================================================
 
     private static final int OTP_EXPIRATION_MINUTES = 5;
 
@@ -41,8 +51,12 @@ public class OtpService {
 
         this.userRepository = userRepository;
 
+        /*
+         * Do NOT use sendlibUrl here.
+         *
+         * @Value fields are injected after the constructor.
+         */
         this.restClient = RestClient.builder()
-                .baseUrl("https://api.resend.com")
                 .build();
     }
 
@@ -68,40 +82,62 @@ public class OtpService {
 
     public boolean sendOtp(String email) {
 
+        // -------------------------------------------------
+        // CHECK EMAIL
+        // -------------------------------------------------
+
         if (email == null || email.isBlank()) {
+
+            System.err.println(
+                    "OTP failed: email is empty"
+            );
+
             return false;
         }
 
         String normalizedEmail =
                 email.trim().toLowerCase();
 
+
         try {
 
-            // -------------------------------------------------
+            // =================================================
             // FIND USER
-            // -------------------------------------------------
+            // =================================================
 
             User user =
                     userRepository
                             .findByEmail(normalizedEmail)
                             .orElseThrow(
                                     () -> new RuntimeException(
-                                            "User not found"
+                                            "User not found: "
+                                                    + normalizedEmail
                                     )
                             );
 
 
-            // -------------------------------------------------
-            // CHECK ROLE
-            // -------------------------------------------------
+            // =================================================
+            // ROLE CHECK
+            // =================================================
+
+            /*
+             * STUDENT:
+             * No OTP.
+             *
+             * TEACHER:
+             * OTP required.
+             *
+             * ADMIN:
+             * OTP required.
+             */
 
             if (
                     user.getRole() != Role.ADMIN &&
                     user.getRole() != Role.TEACHER
             ) {
 
-                System.err.println(
-                        "OTP not allowed for role: "
+                System.out.println(
+                        "OTP not required for role: "
                                 + user.getRole()
                 );
 
@@ -109,17 +145,17 @@ public class OtpService {
             }
 
 
-            // -------------------------------------------------
+            // =================================================
             // GENERATE OTP
-            // -------------------------------------------------
+            // =================================================
 
             String otp =
                     generateOtp();
 
 
-            // -------------------------------------------------
-            // EXPIRATION
-            // -------------------------------------------------
+            // =================================================
+            // OTP EXPIRATION
+            // =================================================
 
             LocalDateTime expiresAt =
                     LocalDateTime.now()
@@ -128,9 +164,9 @@ public class OtpService {
                             );
 
 
-            // -------------------------------------------------
+            // =================================================
             // SAVE OTP
-            // -------------------------------------------------
+            // =================================================
 
             otpStorage.put(
                     normalizedEmail,
@@ -141,59 +177,139 @@ public class OtpService {
             );
 
 
-            // -------------------------------------------------
-            // EMAIL TEXT
-            // -------------------------------------------------
+            // =================================================
+            // EMAIL HTML
+            // =================================================
 
-            String text =
-                    "Hello "
-                            + user.getFullName()
-                            + ",\n\n"
+            String html =
+                    "<!DOCTYPE html>"
+                    + "<html>"
+                    + "<head>"
+                    + "<meta charset=\"UTF-8\">"
+                    + "<title>SUBMYS Login Verification</title>"
+                    + "</head>"
 
-                            + "Your SUBMYS login verification code is:\n\n"
+                    + "<body style=\""
+                    + "margin:0;"
+                    + "padding:0;"
+                    + "background:#f4f6f8;"
+                    + "font-family:Arial,sans-serif;"
+                    + "\">"
 
-                            + otp
-                            + "\n\n"
+                    + "<div style=\""
+                    + "max-width:600px;"
+                    + "margin:40px auto;"
+                    + "background:white;"
+                    + "padding:30px;"
+                    + "border-radius:12px;"
+                    + "\">"
 
-                            + "This OTP will expire in "
-                            + OTP_EXPIRATION_MINUTES
-                            + " minutes.\n\n"
+                    + "<h2 style=\""
+                    + "color:#2563eb;"
+                    + "margin-bottom:20px;"
+                    + "\">"
+                    + "SUBMYS Login Verification"
+                    + "</h2>"
 
-                            + "If you did not attempt to log in, "
-                            + "please ignore this email.\n\n"
+                    + "<p>"
+                    + "Hello "
+                    + user.getFullName()
+                    + ","
+                    + "</p>"
 
-                            + "Regards,\n"
-                            + "SUBMYS";
+                    + "<p>"
+                    + "Your SUBMYS login verification code is:"
+                    + "</p>"
+
+                    + "<div style=\""
+                    + "font-size:32px;"
+                    + "font-weight:bold;"
+                    + "letter-spacing:8px;"
+                    + "text-align:center;"
+                    + "padding:20px;"
+                    + "margin:25px 0;"
+                    + "background:#f3f4f6;"
+                    + "border-radius:10px;"
+                    + "\">"
+
+                    + otp
+
+                    + "</div>"
+
+                    + "<p>"
+                    + "This OTP will expire in "
+                    + OTP_EXPIRATION_MINUTES
+                    + " minutes."
+                    + "</p>"
+
+                    + "<p>"
+                    + "If you did not attempt to log in, "
+                    + "please ignore this email."
+                    + "</p>"
+
+                    + "<p>"
+                    + "Regards,<br>"
+                    + "<strong>SUBMYS</strong>"
+                    + "</p>"
+
+                    + "</div>"
+
+                    + "</body>"
+                    + "</html>";
 
 
-            // -------------------------------------------------
-            // RESEND REQUEST
-            // -------------------------------------------------
+            // =================================================
+            // SENDLIB REQUEST
+            // =================================================
 
             Map<String, Object> request =
                     Map.of(
-                            "from", resendFrom,
-                            "to", new String[]{
-                                    normalizedEmail
-                            },
+                            "from",
+                            sendlibFrom,
+
+                            "to",
+                            normalizedEmail,
+
                             "subject",
                             "SUBMYS Login Verification Code",
-                            "text",
-                            text
+
+                            "html",
+                            html
                     );
 
 
-            // -------------------------------------------------
-            // SEND USING RESEND
-            // -------------------------------------------------
+            // =================================================
+            // CALL SENDLIB API
+            // =================================================
+
+            System.out.println(
+                    "======================================"
+            );
+
+            System.out.println(
+                    "SENDING OTP THROUGH SENDLIB"
+            );
+
+            System.out.println(
+                    "From: " + sendlibFrom
+            );
+
+            System.out.println(
+                    "To: " + normalizedEmail
+            );
+
+            System.out.println(
+                    "======================================"
+            );
+
 
             String response =
                     restClient
                             .post()
-                            .uri("/emails")
+                            .uri(sendlibUrl)
                             .header(
                                     "Authorization",
-                                    "Bearer " + resendApiKey
+                                    "Bearer " + sendlibApiKey
                             )
                             .contentType(
                                     MediaType.APPLICATION_JSON
@@ -203,24 +319,26 @@ public class OtpService {
                             .body(String.class);
 
 
-            // -------------------------------------------------
+            // =================================================
             // SUCCESS
-            // -------------------------------------------------
+            // =================================================
 
             System.out.println(
                     "======================================"
             );
 
             System.out.println(
-                    "RESEND OTP SUCCESS"
+                    "SENDLIB OTP SUCCESS"
             );
 
             System.out.println(
-                    "To: " + normalizedEmail
+                    "OTP email sent to: "
+                            + normalizedEmail
             );
 
             System.out.println(
-                    "Resend response: " + response
+                    "Sendlib response: "
+                            + response
             );
 
             System.out.println(
@@ -232,24 +350,26 @@ public class OtpService {
 
         } catch (Exception e) {
 
-            // -------------------------------------------------
+            // =================================================
             // ERROR
-            // -------------------------------------------------
+            // =================================================
 
             System.err.println(
                     "======================================"
             );
 
             System.err.println(
-                    "RESEND OTP FAILED"
+                    "SENDLIB OTP FAILED"
             );
 
             System.err.println(
-                    "To: " + normalizedEmail
+                    "Recipient: "
+                            + normalizedEmail
             );
 
             System.err.println(
-                    "Error: " + e.getMessage()
+                    "Error: "
+                            + e.getMessage()
             );
 
             e.printStackTrace();
@@ -272,6 +392,10 @@ public class OtpService {
             String otp
     ) {
 
+        // -------------------------------------------------
+        // VALIDATION
+        // -------------------------------------------------
+
         if (
                 email == null ||
                 email.isBlank() ||
@@ -290,9 +414,9 @@ public class OtpService {
                 otp.trim();
 
 
-        // -------------------------------------------------
-        // GET OTP
-        // -------------------------------------------------
+        // =================================================
+        // GET STORED OTP
+        // =================================================
 
         OtpData otpData =
                 otpStorage.get(
@@ -306,9 +430,9 @@ public class OtpService {
         }
 
 
-        // -------------------------------------------------
+        // =================================================
         // CHECK EXPIRATION
-        // -------------------------------------------------
+        // =================================================
 
         if (
                 LocalDateTime.now()
@@ -325,9 +449,9 @@ public class OtpService {
         }
 
 
-        // -------------------------------------------------
+        // =================================================
         // CHECK OTP
-        // -------------------------------------------------
+        // =================================================
 
         if (
                 !otpData.getOtp()
@@ -338,9 +462,9 @@ public class OtpService {
         }
 
 
-        // -------------------------------------------------
-        // REMOVE OTP
-        // -------------------------------------------------
+        // =================================================
+        // OTP SUCCESS
+        // =================================================
 
         otpStorage.remove(
                 normalizedEmail
