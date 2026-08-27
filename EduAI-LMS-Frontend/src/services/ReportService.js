@@ -2,7 +2,7 @@ import axios from "axios";
 import { getToken } from "../utils/localStorage";
 
 const API_URL =
-    "https://submys.onrender.com/api/reports";
+    "https://submysb.onrender.com/api/reports";
 
 class ReportService {
 

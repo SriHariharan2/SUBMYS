@@ -2,7 +2,7 @@ import axios from "axios";
 import authHeader from "./AuthHeader";
 
 const API_URL =
-    "https://submys.onrender.com/api/course-progress";
+    "https://submysb.onrender.com/api/course-progress";
 
 
 // =====================================================

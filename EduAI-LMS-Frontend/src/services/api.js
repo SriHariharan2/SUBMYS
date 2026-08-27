@@ -2,7 +2,7 @@ import axios from "axios";
 import { getToken } from "../utils/localStorage";
 
 const api = axios.create({
-  baseURL: "https://submys.onrender.com/api",
+  baseURL: "https://submysb.onrender.com/api",
     headers: {
         "Content-Type": "application/json",
     },

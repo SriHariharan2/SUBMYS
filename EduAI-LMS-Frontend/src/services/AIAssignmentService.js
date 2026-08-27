@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API_URL =
-    "https://submys.onrender.com/api/ai";
+    "https://submysb.onrender.com/api/ai";
 
 const reviewAssignment = (data) => {
 
