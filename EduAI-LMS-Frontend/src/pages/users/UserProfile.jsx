@@ -1108,46 +1108,10 @@ function UserProfile() {
 
 
 
-                {/* ================================================= */}
-                {/* DEVELOPER */}
-                {/* ================================================= */}
 
-                <div className="card shadow-sm mt-4">
-                    <div className="card-body text-center py-4">
-
-                        <div
-                            className="mx-auto mb-3 d-flex align-items-center justify-content-center rounded-circle"
-                            style={{
-                                width: "64px",
-                                height: "64px",
-                                background: "#eef2ff",
-                                fontSize: "28px"
-                            }}
-                        >
-                            👨‍💻
-                        </div>
-
-                        <h5 className="fw-bold mb-2">
-                            Developed by Sri Hariharan
-                        </h5>
-
-                        <p className="text-muted mb-3">
-                            SUBMYS – Smart Learning Management Platform
-                        </p>
-
-                        <a
-                            href="https://www.linkedin.com/in/sri-hariharan-muralikumar-a50276240/"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="btn btn-primary"
-                        >
-                            View LinkedIn Profile
-                        </a>
-
-                    </div>
-                </div>
 
                         </div>
+
 
                     </div>
 
@@ -1156,6 +1120,58 @@ function UserProfile() {
 
             </div>
 
+<div
+  style={{
+    background: "#fff",
+    border: "1px solid #d9d9d9",
+    borderRadius: "6px",
+    padding: "28px 20px",
+    marginTop: "20px",
+    textAlign: "center",
+    boxShadow: "0 2px 5px rgba(0,0,0,0.08)"
+  }}
+>
+  <div
+    style={{
+      width: "64px",
+      height: "64px",
+      margin: "0 auto 16px",
+      borderRadius: "50%",
+      background: "#eef2ff",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontSize: "30px"
+    }}
+  >
+    👨‍💻
+  </div>
+
+  <h2 style={{ margin: "0 0 8px", color: "#111827" }}>
+    Developed by Sri Hariharan
+  </h2>
+
+  <p style={{ margin: "0 0 20px", color: "#64748b" }}>
+    SUBMYS – Smart Learning Management Platform
+  </p>
+
+  <a
+    href="https://www.linkedin.com/in/sri-hariharan-muralikumar-a50276240/"
+    target="_blank"
+    rel="noopener noreferrer"
+    style={{
+      display: "inline-block",
+      padding: "10px 18px",
+      background: "#0a66c2",
+      color: "#fff",
+      textDecoration: "none",
+      borderRadius: "6px",
+      fontWeight: "500"
+    }}
+  >
+    View LinkedIn Profile
+  </a>
+</div>
         </DashboardLayout>
 
     );
