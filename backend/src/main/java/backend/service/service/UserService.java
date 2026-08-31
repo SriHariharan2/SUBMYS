@@ -67,35 +67,20 @@ public class UserService {
 
     public User createUser(User user) {
 
-        // -----------------------------------------------------
-        // CHECK PASSWORD
-        // -----------------------------------------------------
+        if (user == null) {
+            throw new RuntimeException("User data is required");
+        }
 
-        if (user.getPassword() == null
-                || user.getPassword().isBlank()) {
+        // Check name
+        if (user.getFullName() == null
+                || user.getFullName().isBlank()) {
 
             throw new RuntimeException(
-                    "Password is required"
+                    "Full name is required"
             );
         }
 
-
-        // -----------------------------------------------------
-        // PASSWORD LENGTH
-        // -----------------------------------------------------
-
-        if (user.getPassword().length() < 6) {
-
-            throw new RuntimeException(
-                    "Password must be at least 6 characters"
-            );
-        }
-
-
-        // -----------------------------------------------------
-        // CHECK EMAIL
-        // -----------------------------------------------------
-
+        // Check email
         if (user.getEmail() == null
                 || user.getEmail().isBlank()) {
 
@@ -104,11 +89,16 @@ public class UserService {
             );
         }
 
+        // Check password
+        if (user.getPassword() == null
+                || user.getPassword().isBlank()) {
 
-        // -----------------------------------------------------
-        // CHECK DUPLICATE EMAIL
-        // -----------------------------------------------------
+            throw new RuntimeException(
+                    "Password is required"
+            );
+        }
 
+        // Check duplicate email
         if (userRepository.existsByEmail(user.getEmail())) {
 
             throw new RuntimeException(
@@ -116,20 +106,16 @@ public class UserService {
             );
         }
 
-
-        // -----------------------------------------------------
-        // DEFAULT ROLE
-        // -----------------------------------------------------
-
+        // Default role
         if (user.getRole() == null) {
 
             user.setRole(Role.STUDENT);
         }
 
-
-        // -----------------------------------------------------
-        // ENCODE PASSWORD WITH BCrypt
-        // -----------------------------------------------------
+        // =====================================================
+        // IMPORTANT:
+        // ENCODE PASSWORD BEFORE SAVING
+        // =====================================================
 
         String encodedPassword =
                 passwordEncoder.encode(
@@ -138,11 +124,7 @@ public class UserService {
 
         user.setPassword(encodedPassword);
 
-
-        // -----------------------------------------------------
-        // SAVE USER
-        // -----------------------------------------------------
-
+        // Save user
         return userRepository.save(user);
     }
 
@@ -158,9 +140,8 @@ public class UserService {
 
         User existingUser = getUserById(id);
 
-
         // -----------------------------------------------------
-        // UPDATE FULL NAME
+        // UPDATE NAME
         // -----------------------------------------------------
 
         if (updatedUser.getFullName() != null
@@ -177,23 +158,40 @@ public class UserService {
         // -----------------------------------------------------
 
         if (updatedUser.getEmail() != null
-                && !updatedUser.getEmail().isBlank()) {
+                && !updatedUser.getEmail().isBlank()
+                && !updatedUser.getEmail()
+                    .equalsIgnoreCase(existingUser.getEmail())) {
 
-            String newEmail =
-                    updatedUser.getEmail().trim();
-
-            // Check if another user already has this email
-            if (!newEmail.equalsIgnoreCase(
-                    existingUser.getEmail()
-            )
-                    && userRepository.existsByEmail(newEmail)) {
+            if (userRepository.existsByEmail(
+                    updatedUser.getEmail()
+            )) {
 
                 throw new RuntimeException(
                         "Email already exists"
                 );
             }
 
-            existingUser.setEmail(newEmail);
+            existingUser.setEmail(
+                    updatedUser.getEmail()
+            );
+        }
+
+
+        // -----------------------------------------------------
+        // UPDATE PASSWORD
+        // -----------------------------------------------------
+
+        if (updatedUser.getPassword() != null
+                && !updatedUser.getPassword().isBlank()) {
+
+            String encodedPassword =
+                    passwordEncoder.encode(
+                            updatedUser.getPassword()
+                    );
+
+            existingUser.setPassword(
+                    encodedPassword
+            );
         }
 
 
@@ -210,38 +208,6 @@ public class UserService {
 
 
         // -----------------------------------------------------
-        // PASSWORD
-        // -----------------------------------------------------
-        //
-        // Only update password if a new password was provided.
-        //
-        // If password is blank:
-        // keep the existing password.
-        //
-        // -----------------------------------------------------
-
-        if (updatedUser.getPassword() != null
-                && !updatedUser.getPassword().isBlank()) {
-
-            if (updatedUser.getPassword().length() < 6) {
-
-                throw new RuntimeException(
-                        "Password must be at least 6 characters"
-                );
-            }
-
-            String encodedPassword =
-                    passwordEncoder.encode(
-                            updatedUser.getPassword()
-                    );
-
-            existingUser.setPassword(
-                    encodedPassword
-            );
-        }
-
-
-        // -----------------------------------------------------
         // SAVE
         // -----------------------------------------------------
 
@@ -250,7 +216,7 @@ public class UserService {
 
 
     // =========================================================
-    // GET USER PROFILE WITH ACTIVITY COUNTS
+    // GET USER PROFILE
     // =========================================================
 
     public UserProfileResponse getUserProfile(Long id) {
@@ -258,17 +224,9 @@ public class UserService {
         User user = getUserById(id);
 
 
-        // -----------------------------------------------------
-        // TOTAL COURSES
-        // -----------------------------------------------------
-
         long totalCourses =
                 courseRepository.count();
 
-
-        // -----------------------------------------------------
-        // TOTAL STUDENTS
-        // -----------------------------------------------------
 
         long totalStudents =
                 userRepository.countByRole(
@@ -276,25 +234,13 @@ public class UserService {
                 );
 
 
-        // -----------------------------------------------------
-        // TOTAL ASSIGNMENTS
-        // -----------------------------------------------------
-
         long totalAssignments =
                 assignmentRepository.count();
 
 
-        // -----------------------------------------------------
-        // TOTAL QUIZZES
-        // -----------------------------------------------------
-
         long totalQuizzes =
                 quizRepository.count();
 
-
-        // -----------------------------------------------------
-        // RETURN PROFILE
-        // -----------------------------------------------------
 
         return new UserProfileResponse(
 
@@ -329,10 +275,6 @@ public class UserService {
         User user = getUserById(id);
 
 
-        // -----------------------------------------------------
-        // CHECK REQUEST
-        // -----------------------------------------------------
-
         if (request == null) {
 
             throw new RuntimeException(
@@ -340,10 +282,6 @@ public class UserService {
             );
         }
 
-
-        // -----------------------------------------------------
-        // CURRENT PASSWORD
-        // -----------------------------------------------------
 
         if (request.getCurrentPassword() == null
                 || request.getCurrentPassword().isBlank()) {
@@ -354,10 +292,6 @@ public class UserService {
         }
 
 
-        // -----------------------------------------------------
-        // NEW PASSWORD
-        // -----------------------------------------------------
-
         if (request.getNewPassword() == null
                 || request.getNewPassword().isBlank()) {
 
@@ -366,10 +300,6 @@ public class UserService {
             );
         }
 
-
-        // -----------------------------------------------------
-        // EXISTING PASSWORD
-        // -----------------------------------------------------
 
         if (user.getPassword() == null
                 || user.getPassword().isBlank()) {
@@ -380,10 +310,7 @@ public class UserService {
         }
 
 
-        // -----------------------------------------------------
-        // VERIFY CURRENT PASSWORD
-        // -----------------------------------------------------
-
+        // Check current password
         if (!passwordEncoder.matches(
                 request.getCurrentPassword(),
                 user.getPassword()
@@ -395,10 +322,7 @@ public class UserService {
         }
 
 
-        // -----------------------------------------------------
-        // PASSWORD LENGTH
-        // -----------------------------------------------------
-
+        // Minimum password length
         if (request.getNewPassword().length() < 6) {
 
             throw new RuntimeException(
@@ -407,10 +331,7 @@ public class UserService {
         }
 
 
-        // -----------------------------------------------------
-        // SAME PASSWORD CHECK
-        // -----------------------------------------------------
-
+        // Make sure new password is different
         if (passwordEncoder.matches(
                 request.getNewPassword(),
                 user.getPassword()
@@ -422,25 +343,17 @@ public class UserService {
         }
 
 
-        // -----------------------------------------------------
-        // ENCODE NEW PASSWORD
-        // -----------------------------------------------------
-
+        // Encode new password
         String encodedPassword =
                 passwordEncoder.encode(
                         request.getNewPassword()
                 );
 
 
-        user.setPassword(
-                encodedPassword
-        );
+        user.setPassword(encodedPassword);
 
 
-        // -----------------------------------------------------
-        // SAVE
-        // -----------------------------------------------------
-
+        // Save
         userRepository.save(user);
     }
 
