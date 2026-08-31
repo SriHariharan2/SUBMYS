@@ -24,8 +24,12 @@ public class User {
     private String email;
 
     /*
-     * Password can be RECEIVED from frontend,
-     * but will NEVER be returned in JSON responses.
+     * WRITE_ONLY means:
+     *
+     * React -> Backend : password is accepted
+     * Backend -> React : password is NOT returned
+     *
+     * This is better than @JsonIgnore for your use case.
      */
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @Column(nullable = false)
@@ -35,6 +39,10 @@ public class User {
     @Column(nullable = false)
     private Role role;
 
+
+    // =========================================================
+    // CONSTRUCTOR
+    // =========================================================
 
     public User() {
     }
@@ -47,7 +55,6 @@ public class User {
             String password,
             Role role
     ) {
-
         this.id = id;
         this.fullName = fullName;
         this.email = email;
@@ -55,6 +62,10 @@ public class User {
         this.role = role;
     }
 
+
+    // =========================================================
+    // GETTERS / SETTERS
+    // =========================================================
 
     public Long getId() {
         return id;
@@ -83,7 +94,6 @@ public class User {
     }
 
 
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     public String getPassword() {
         return password;
     }
