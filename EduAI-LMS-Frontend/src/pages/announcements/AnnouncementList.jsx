@@ -258,7 +258,7 @@ function AnnouncementList() {
                         fontWeight: "400",
                     }}
                 >
-                    EduAI-LMS
+                    SUBMYS-LMS
                 </div>
 
                 <div
@@ -330,7 +330,7 @@ function AnnouncementList() {
                             lineHeight: "1.15",
                         }}
                     >
-                        EduAI LMS
+                        SUBMYS LMS
                     </div>
 
                     {/* Admin Information */}

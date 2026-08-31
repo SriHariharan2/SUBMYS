@@ -18,93 +18,196 @@ function UserForm() {
         role: "STUDENT"
     });
 
+    const [saving, setSaving] = useState(false);
+
+    // =========================================================
+    // LOAD USER FOR EDIT
+    // =========================================================
+
     useEffect(() => {
 
-        if (isEdit) {
-
-            UserService.getUser(id)
-                .then((response) => {
-
-                    setUser({
-                        fullName: response.data.fullName,
-                        email: response.data.email,
-                        password: "",
-                        role: response.data.role
-                    });
-
-                })
-                .catch((error) => console.error(error));
-
+        if (!isEdit) {
+            return;
         }
 
+        UserService.getUser(id)
+            .then((response) => {
+
+                setUser({
+                    fullName: response.data.fullName || "",
+                    email: response.data.email || "",
+                    password: "",
+                    role: response.data.role || "STUDENT"
+                });
+
+            })
+            .catch((error) => {
+
+                console.error("Error loading user:", error);
+
+                alert("Unable to load user.");
+
+            });
+
     }, [id, isEdit]);
+
+
+    // =========================================================
+    // HANDLE INPUT
+    // =========================================================
 
     const handleChange = (e) => {
 
         const { name, value } = e.target;
 
-        setUser(prev => ({
+        setUser((prev) => ({
             ...prev,
             [name]: value
         }));
 
     };
 
-    const saveUser = (e) => {
+
+    // =========================================================
+    // SAVE USER
+    // =========================================================
+
+    const saveUser = async (e) => {
 
         e.preventDefault();
 
-        if (
-            !user.fullName.trim() ||
-            !user.email.trim() ||
-            (!isEdit && !user.password.trim())
-        ) {
+        // -----------------------------------------------------
+        // VALIDATION
+        // -----------------------------------------------------
 
-            alert("Please fill in all required fields.");
+        if (!user.fullName.trim()) {
+
+            alert("Please enter full name.");
 
             return;
-
         }
 
-        if (isEdit) {
+        if (!user.email.trim()) {
 
-            UserService.updateUser(id, user)
-                .then(() => {
+            alert("Please enter email.");
 
-                    alert("User updated successfully.");
-
-                    navigate("/users");
-
-                })
-                .catch((error) => {
-
-                    console.error(error);
-
-                    alert("Unable to update user.");
-
-                });
-
-        } else {
-
-            UserService.createUser(user)
-                .then(() => {
-
-                    alert("User created successfully.");
-
-                    navigate("/users");
-
-                })
-                .catch((error) => {
-
-                    console.error(error);
-
-                    alert("Unable to create user.");
-
-                });
-
+            return;
         }
 
+        // Password is required ONLY when creating a user
+        if (!isEdit && !user.password.trim()) {
+
+            alert("Please enter a password.");
+
+            return;
+        }
+
+        // -----------------------------------------------------
+        // CLEAN VALUES
+        // -----------------------------------------------------
+
+        const fullName = user.fullName.trim();
+        const email = user.email.trim().toLowerCase();
+        const role = user.role;
+
+        setSaving(true);
+
+        try {
+
+            // =================================================
+            // CREATE USER
+            // =================================================
+
+            if (!isEdit) {
+
+                // IMPORTANT:
+                // Explicitly send password to backend.
+                // Backend will BCrypt encode it.
+
+                const createRequest = {
+                    fullName: fullName,
+                    email: email,
+                    password: user.password,
+                    role: role
+                };
+
+                console.log("Creating user:", {
+                    fullName: createRequest.fullName,
+                    email: createRequest.email,
+                    role: createRequest.role,
+                    passwordProvided:
+                        Boolean(createRequest.password)
+                });
+
+                await UserService.createUser(createRequest);
+
+                alert("User created successfully.");
+
+                navigate("/users");
+
+                return;
+            }
+
+
+            // =================================================
+            // UPDATE USER
+            // =================================================
+
+            const updateRequest = {
+                fullName: fullName,
+                email: email,
+                role: role
+            };
+
+            // -------------------------------------------------
+            // Only send password if admin entered a new one.
+            // -------------------------------------------------
+
+            if (user.password.trim()) {
+
+                updateRequest.password = user.password;
+
+            }
+
+            console.log("Updating user:", {
+                fullName: updateRequest.fullName,
+                email: updateRequest.email,
+                role: updateRequest.role,
+                passwordProvided:
+                    Boolean(updateRequest.password)
+            });
+
+            await UserService.updateUser(
+                id,
+                updateRequest
+            );
+
+            alert("User updated successfully.");
+
+            navigate("/users");
+
+        } catch (error) {
+
+            console.error("User save error:", error);
+
+            const message =
+                error?.response?.data?.message ||
+                error?.response?.data ||
+                "Unable to save user.";
+
+            alert(message);
+
+        } finally {
+
+            setSaving(false);
+
+        }
     };
+
+
+    // =========================================================
+    // UI
+    // =========================================================
 
     return (
 
@@ -116,24 +219,29 @@ function UserForm() {
 
                     <div className="card-header">
 
-                        <h3>
+                        <h3 className="mb-0">
 
-                            {isEdit ? "Edit User" : "Add User"}
+                            {isEdit
+                                ? "Edit User"
+                                : "Add User"}
 
                         </h3>
 
                     </div>
 
+
                     <div className="card-body">
 
                         <form onSubmit={saveUser}>
 
+                            {/* =================================
+                                FULL NAME
+                            ================================= */}
+
                             <div className="mb-3">
 
                                 <label className="form-label">
-
                                     Full Name
-
                                 </label>
 
                                 <input
@@ -147,12 +255,15 @@ function UserForm() {
 
                             </div>
 
+
+                            {/* =================================
+                                EMAIL
+                            ================================= */}
+
                             <div className="mb-3">
 
                                 <label className="form-label">
-
                                     Email
-
                                 </label>
 
                                 <input
@@ -166,12 +277,15 @@ function UserForm() {
 
                             </div>
 
+
+                            {/* =================================
+                                PASSWORD
+                            ================================= */}
+
                             <div className="mb-3">
 
                                 <label className="form-label">
-
                                     Password
-
                                 </label>
 
                                 <input
@@ -183,19 +297,31 @@ function UserForm() {
                                     placeholder={
                                         isEdit
                                             ? "Leave blank to keep current password"
-                                            : ""
+                                            : "Enter password"
                                     }
                                     required={!isEdit}
+                                    minLength={6}
                                 />
 
+                                {!isEdit && (
+
+                                    <small className="text-muted">
+                                        Password must be at least 6 characters.
+                                    </small>
+
+                                )}
+
                             </div>
+
+
+                            {/* =================================
+                                ROLE
+                            ================================= */}
 
                             <div className="mb-4">
 
                                 <label className="form-label">
-
                                     Role
-
                                 </label>
 
                                 <select
@@ -221,19 +347,33 @@ function UserForm() {
 
                             </div>
 
+
+                            {/* =================================
+                                BUTTONS
+                            ================================= */}
+
                             <button
                                 type="submit"
                                 className="btn btn-success me-2"
+                                disabled={saving}
                             >
 
-                                {isEdit ? "Update" : "Save"}
+                                {saving
+                                    ? "Saving..."
+                                    : isEdit
+                                        ? "Update"
+                                        : "Save"}
 
                             </button>
+
 
                             <button
                                 type="button"
                                 className="btn btn-secondary"
-                                onClick={() => navigate("/users")}
+                                disabled={saving}
+                                onClick={() =>
+                                    navigate("/users")
+                                }
                             >
 
                                 Cancel
@@ -249,9 +389,7 @@ function UserForm() {
             </div>
 
         </DashboardLayout>
-
     );
-
 }
 
 export default UserForm;

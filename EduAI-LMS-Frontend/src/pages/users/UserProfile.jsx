@@ -1169,7 +1169,7 @@ function UserProfile() {
       fontWeight: "500"
     }}
   >
-    View LinkedIn Profile
+    Contact
   </a>
 </div>
         </DashboardLayout>

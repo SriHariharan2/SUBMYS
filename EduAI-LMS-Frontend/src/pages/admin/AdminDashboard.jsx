@@ -249,7 +249,7 @@ function AdminDashboard() {
                         <h1>Welcome back, {adminName}</h1>
 
                         <p>
-                            Manage your EduAI LMS from one central workspace.
+                            Manage your SUBMYS LMS from one central workspace.
                             Access users, courses, assessments, reports, and
                             system resources quickly.
                         </p>
